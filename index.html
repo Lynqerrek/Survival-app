@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Survival OS v3.0 - Pro Edition</title>
+    <title>Survival OS v3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -21,368 +21,409 @@
             font-family: 'Share Tech Mono', monospace;
             background-color: var(--bg);
             color: var(--neon);
-            overscroll-behavior-y: contain;
+            margin: 0;
+            padding: 0;
+            /* Allow scrolling now */
+            overflow-x: hidden;
             user-select: none;
             -webkit-user-select: none;
         }
 
+        /* Fixed the height and overflow issues */
         .tool-panel {
             display: none;
-            animation: slideUp 0.3s ease-out;
-            height: 100%;
-            overflow-y: auto;
-            padding-bottom: 5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            min-height: calc(100vh - 140px);
+            padding-bottom: 100px; /* Space for footer */
         }
 
-        .tool-panel.active { display: flex; flex-direction: column; }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .tool-panel.active { 
+            display: block; 
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* HARDWARE COMPASS */
+        .compass-container {
+            perspective: 1000px;
+        }
+
         .compass-ring {
             position: relative;
-            width: 260px;
-            height: 260px;
-            border: 3px solid var(--neon);
+            width: 240px;
+            height: 240px;
+            border: 2px solid var(--neon);
             border-radius: 50%;
-            transition: transform 0.1s cubic-bezier(0.1, 0.5, 0.5, 1);
-            background: radial-gradient(circle, rgba(74,222,128,0.05) 0%, transparent 70%);
-            box-shadow: 0 0 20px var(--neon-dim);
+            transition: transform 0.2s cubic-bezier(0.1, 0.3, 0.3, 1);
+            background: radial-gradient(circle, rgba(74,222,128,0.1) 0%, transparent 80%);
+            box-shadow: 0 0 30px var(--neon-dim);
+            margin: 0 auto;
         }
 
         .compass-mark {
             position: absolute;
-            top: 5px;
+            top: 8px;
             left: 50%;
             transform: translateX(-50%);
             color: var(--danger);
             font-weight: bold;
-            font-size: 1.2rem;
         }
 
         .waypoint-pointer {
             position: absolute;
-            top: -15px;
+            top: -20px;
             left: 50%;
-            margin-left: -10px;
-            width: 20px;
-            height: 20px;
+            margin-left: -12px;
+            width: 24px;
+            height: 24px;
             background: var(--waypoint);
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            box-shadow: 0 0 10px var(--waypoint);
+            filter: drop-shadow(0 0 8px var(--waypoint));
             display: none;
+            z-index: 20;
         }
 
-        /* NEW: RANGEFINDER OVERLAY */
-        #camera-preview {
-            width: 100%;
-            height: 200px;
-            background: #111;
-            border: 1px solid var(--neon-dim);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .range-reticle {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px; height: 60px;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        /* GLASS MORPHISM */
         .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(74, 222, 128, 0.1);
-            border-radius: 12px;
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(74, 222, 128, 0.15);
+            border-radius: 16px;
         }
 
         .nav-btn.active {
             color: var(--neon);
-            filter: drop-shadow(0 0 5px var(--neon));
+            transform: scale(1.1);
+        }
+        
+        .nav-btn.active i {
+            filter: drop-shadow(0 0 8px var(--neon));
+        }
+
+        #camera-preview {
+            width: 100%;
+            height: 180px;
+            background: #111;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--neon-dim);
+        }
+
+        /* Mobile specific scroll fix */
+        main {
+            height: auto;
+            overflow-y: visible;
         }
     </style>
 </head>
-<body class="h-screen w-full flex flex-col overflow-hidden">
+<body class="min-h-screen">
 
     <!-- INITIALIZATION OVERLAY -->
     <div id="init-screen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-8 text-center">
         <div class="mb-8 relative">
-            <i data-lucide="compass" class="w-20 h-20 text-green-400 animate-spin" style="animation-duration: 4s;"></i>
-            <div class="absolute inset-0 flex items-center justify-center">
-                <i data-lucide="satellite" class="w-6 h-6 text-blue-400"></i>
-            </div>
+            <i data-lucide="shield-check" class="w-20 h-20 text-green-400"></i>
         </div>
-        <h1 class="text-3xl font-bold tracking-tighter mb-4">SURVIVAL<span class="text-white">OS</span> v3.0</h1>
-        <p class="text-xs text-green-500/60 uppercase tracking-widest mb-8">Accessing Magnetometer • Calibrating GPS • Initializing Barometer</p>
-        <button id="btn-init" class="w-full max-w-xs py-4 border-2 border-green-500 bg-green-500/10 text-green-400 font-bold rounded-lg active:bg-green-500 active:text-black transition-all">
-            ENGAGE SENSORS
+        <h1 class="text-3xl font-bold tracking-tighter mb-4 text-white">SYSTEM <span class="text-green-500">INIT</span></h1>
+        <p class="text-xs text-green-500/60 uppercase tracking-widest mb-10 max-w-[250px]">Requires Motion and Location permissions for True-North Calibration</p>
+        <button id="btn-init" class="w-full max-w-xs py-5 bg-green-500 text-black font-black rounded-xl active:scale-95 transition-all shadow-[0_0_20px_rgba(74,222,128,0.4)]">
+            AUTHORIZE SENSORS
         </button>
     </div>
 
-    <!-- STATUS BAR -->
-    <header class="p-3 border-b border-white/10 flex justify-between items-center bg-black/50 backdrop-blur-md z-50">
-        <div class="flex items-center gap-2">
-            <div id="gps-indicator" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_red]"></div>
-            <span class="text-[10px] uppercase font-bold tracking-tighter" id="gps-status-text">GPS: DISCONNECTED</span>
+    <!-- STATUS BAR (STAYS AT TOP) -->
+    <header class="sticky top-0 p-4 border-b border-white/10 flex justify-between items-center bg-black/90 backdrop-blur-lg z-50">
+        <div class="flex items-center gap-3">
+            <div id="gps-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></div>
+            <span class="text-[11px] font-bold tracking-widest" id="gps-status-text">GPS: STANDBY</span>
         </div>
         <div class="flex gap-4 items-center">
-            <span class="text-[10px] font-mono" id="batt-text">BATT: --%</span>
-            <span class="text-[10px] font-mono" id="time-text">00:00:00</span>
+            <span class="text-[11px] font-mono" id="batt-text">--%</span>
+            <span class="text-[11px] font-mono" id="time-text">00:00</span>
         </div>
     </header>
 
-    <!-- MAIN TOOLS CONTAINER -->
-    <main class="flex-1 relative overflow-hidden">
+    <!-- MAIN CONTENT -->
+    <main class="p-4">
         
-        <!-- TOOL 1: NAVIGATION (FIXED) -->
-        <div id="tool-nav" class="tool-panel active p-4">
-            <div class="flex flex-col items-center mb-6">
-                <div class="text-5xl font-bold mb-2 tracking-tighter" id="heading-display">000°</div>
-                <div class="text-sm text-green-500/70 mb-6 uppercase tracking-widest" id="cardinal-display">NORTH</div>
-                
+        <!-- TOOL 1: NAVIGATION -->
+        <div id="tool-nav" class="tool-panel active">
+            <div class="text-center mb-10">
+                <div class="text-6xl font-black mb-1 tracking-tighter" id="heading-display">000°</div>
+                <div class="text-xs text-green-500/70 uppercase tracking-[0.3em]" id="cardinal-display">NORTH</div>
+            </div>
+
+            <div class="compass-container flex justify-center mb-10">
                 <div class="relative">
-                    <!-- Fixed Pointer (The "Front" of your phone) -->
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-1 h-8 bg-red-500 z-10 shadow-[0_0_10px_red]"></div>
+                    <!-- Stationary Front Marker -->
+                    <div class="absolute -top-6 left-1/2 -translate-x-1/2 w-1.5 h-10 bg-red-500 z-30 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.6)]"></div>
                     
                     <div class="compass-ring" id="compass-ring">
                         <div class="compass-mark">N</div>
-                        <div class="absolute bottom-1 left-1/2 -translate-x-1/2">S</div>
-                        <div class="absolute right-2 top-1/2 -translate-y-1/2">E</div>
-                        <div class="absolute left-2 top-1/2 -translate-y-1/2">W</div>
-                        <!-- Target Pointer -->
+                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/40">S</div>
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40">E</div>
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">W</div>
+                        <!-- Waypoint Arrow inside the ring -->
                         <div id="target-pointer" class="waypoint-pointer"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                <div class="glass p-3">
-                    <div class="text-[9px] text-white/40 uppercase">Latitude</div>
-                    <div id="lat-val" class="text-sm font-bold">--.-----</div>
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="glass p-4">
+                    <div class="text-[9px] text-white/40 uppercase mb-1">Latitude</div>
+                    <div id="lat-val" class="text-sm font-bold tracking-tight">--.-----</div>
                 </div>
-                <div class="glass p-3">
-                    <div class="text-[9px] text-white/40 uppercase">Longitude</div>
-                    <div id="lon-val" class="text-sm font-bold">--.-----</div>
+                <div class="glass p-4">
+                    <div class="text-[9px] text-white/40 uppercase mb-1">Longitude</div>
+                    <div id="lon-val" class="text-sm font-bold tracking-tight">--.-----</div>
                 </div>
-                <div class="glass p-3">
-                    <div class="text-[9px] text-white/40 uppercase">Accuracy</div>
-                    <div id="acc-val" class="text-sm font-bold text-red-400">NO LOCK</div>
+                <div class="glass p-4">
+                    <div class="text-[9px] text-white/40 uppercase mb-1">Accuracy</div>
+                    <div id="acc-val" class="text-sm font-bold text-red-500">NONE</div>
                 </div>
-                <div class="glass p-3">
-                    <div class="text-[9px] text-white/40 uppercase">Altitude</div>
-                    <div id="alt-val" class="text-sm font-bold">-- m</div>
+                <div class="glass p-4">
+                    <div class="text-[9px] text-white/40 uppercase mb-1">Sensor</div>
+                    <div id="sensor-type" class="text-[10px] font-bold text-blue-400">WAITING</div>
                 </div>
             </div>
 
-            <div class="glass p-4 border-blue-500/20 bg-blue-500/5">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold text-blue-400 flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-3 h-3"></i> WAYPOINT: BASE CAMP
+            <div class="glass p-5 border-blue-500/30 bg-blue-500/5 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[10px] font-black text-blue-400 flex items-center gap-2 tracking-widest uppercase">
+                        <i data-lucide="map-pin" class="w-3 h-3"></i> Destination Lock
                     </span>
-                    <button id="btn-lock-gps" class="text-[10px] px-2 py-1 border border-blue-400 rounded hover:bg-blue-400 hover:text-black">LOCK HERE</button>
+                    <button id="btn-lock-gps" class="text-[9px] font-bold px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg uppercase">Update</button>
                 </div>
-                <div class="flex justify-between text-lg font-bold">
-                    <span id="waypoint-dist">-- m</span>
-                    <span id="waypoint-bearing" class="text-blue-400">---°</span>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <div class="text-[9px] text-blue-300/50 uppercase">Distance</div>
+                        <div id="waypoint-dist" class="text-2xl font-black">-- m</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[9px] text-blue-300/50 uppercase">Bearing</div>
+                        <div id="waypoint-bearing" class="text-2xl font-black text-blue-400">---°</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- TOOL 2: RANGEFINDER (NEW) -->
-        <div id="tool-range" class="tool-panel p-4">
-            <h2 class="text-xl font-bold mb-4 uppercase tracking-tighter">Optic Rangefinder</h2>
-            <div id="camera-preview" class="rounded-lg mb-4 flex items-center justify-center">
-                <div class="range-reticle"></div>
-                <span class="text-[10px] text-white/20 uppercase">Camera Module Active</span>
-            </div>
-            <div class="glass p-4">
-                <label class="text-[10px] text-white/40 uppercase block mb-2">Target Height (Meters)</label>
-                <input type="range" id="target-height" min="0.5" max="3.0" step="0.1" value="1.7" class="w-full accent-green-500 mb-2">
-                <div class="flex justify-between text-xs font-mono mb-4">
-                    <span>0.5m</span>
-                    <span class="text-white font-bold" id="height-label">1.7m (Avg Adult)</span>
-                    <span>3.0m</span>
+        <!-- TOOL 2: RANGEFINDER -->
+        <div id="tool-range" class="tool-panel">
+            <h2 class="text-xl font-bold mb-6 uppercase flex items-center gap-2">
+                <i data-lucide="scan"></i> Rangefinder
+            </h2>
+            <div id="camera-preview" class="mb-6 flex items-center justify-center">
+                <div class="w-12 h-12 border border-green-500/40 rounded-full flex items-center justify-center">
+                    <div class="w-1 h-1 bg-green-500"></div>
                 </div>
-                <div class="text-center p-4 bg-green-500/10 rounded border border-green-500/20">
-                    <div class="text-[10px] uppercase text-green-500/60">Estimated Distance</div>
-                    <div class="text-4xl font-bold" id="range-val">-- m</div>
+                <div class="absolute bottom-2 right-2 text-[8px] opacity-30 uppercase tracking-tighter">Optic Engine v2</div>
+            </div>
+            <div class="glass p-6">
+                <div class="flex justify-between text-[10px] uppercase text-white/40 mb-4">
+                    <span>Object Height</span>
+                    <span class="text-green-400 font-bold" id="height-label">1.7m</span>
+                </div>
+                <input type="range" id="target-height" min="0.5" max="10.0" step="0.1" value="1.7" class="w-full accent-green-500 mb-8 h-2 bg-white/5 rounded-lg appearance-none">
+                <div class="text-center py-6 bg-white/5 rounded-2xl border border-white/10">
+                    <div class="text-[10px] uppercase text-white/40 mb-1">Target Range</div>
+                    <div class="text-5xl font-black tracking-tighter" id="range-val">--.- m</div>
                 </div>
             </div>
-            <p class="text-[10px] text-white/30 mt-4 leading-tight">Tilt device to align reticle with object base and top to calculate distance based on angular size.</p>
         </div>
 
-        <!-- TOOL 3: WEATHER & BARO (NEW) -->
-        <div id="tool-weather" class="tool-panel p-4">
-            <h2 class="text-xl font-bold mb-4 uppercase tracking-tighter">Atmospheric Monitor</h2>
+        <!-- TOOL 3: ENVIRONMENT -->
+        <div id="tool-weather" class="tool-panel">
+            <h2 class="text-xl font-bold mb-6 uppercase flex items-center gap-2">
+                <i data-lucide="wind"></i> Environment
+            </h2>
             <div class="grid grid-cols-1 gap-4">
-                <div class="glass p-6 text-center">
-                    <div class="text-[10px] text-white/40 uppercase mb-2">Barometric Pressure</div>
-                    <div class="text-5xl font-bold mb-2" id="baro-val">----</div>
-                    <div class="text-xs font-bold text-green-400" id="baro-trend">STEADY</div>
+                <div class="glass p-8 text-center bg-gradient-to-b from-green-500/5 to-transparent">
+                    <div class="text-[10px] text-white/40 uppercase mb-2 font-bold tracking-[0.2em]">Baro Pressure</div>
+                    <div class="text-6xl font-black mb-3" id="baro-val">1013</div>
+                    <div class="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-[10px] font-bold" id="baro-trend">STEADY CONDITION</div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="glass p-4">
-                        <div class="text-[10px] text-white/40 uppercase">Hours of Day</div>
-                        <div class="text-xl font-bold" id="sun-hours">--:--</div>
+                    <div class="glass p-5">
+                        <div class="text-[9px] text-white/40 uppercase mb-1">Light Available</div>
+                        <div class="text-2xl font-black" id="sun-hours">00.0h</div>
                     </div>
-                    <div class="glass p-4">
-                        <div class="text-[10px] text-white/40 uppercase">Sunset</div>
-                        <div class="text-xl font-bold" id="sunset-time">--:--</div>
+                    <div class="glass p-5">
+                        <div class="text-[9px] text-white/40 uppercase mb-1">Sun Cycle</div>
+                        <div class="text-xl font-black" id="sunset-time">--:--</div>
                     </div>
-                </div>
-                <div class="glass p-4 border-orange-500/20">
-                    <h3 class="text-xs font-bold text-orange-400 mb-2">STORM ALERT SYSTEM</h3>
-                    <p class="text-[10px] text-white/60">Monitors rapid pressure drops (>3hPa/hr). High accuracy requires internal hardware barometer.</p>
                 </div>
             </div>
         </div>
 
-        <!-- TOOL 4: SIGNALING -->
-        <div id="tool-signal" class="tool-panel p-4">
-            <h2 class="text-xl font-bold mb-6 uppercase tracking-tighter">Emergency Signaling</h2>
-            <button id="btn-sos" class="w-full py-8 glass border-red-500/30 text-red-500 mb-4 flex flex-col items-center gap-2 active:scale-95 transition-transform">
-                <i data-lucide="alert-triangle" class="w-10 h-10"></i>
-                <span class="font-bold text-xl tracking-widest">S.O.S STROBE</span>
+        <!-- TOOL 4: COMMS -->
+        <div id="tool-signal" class="tool-panel">
+            <h2 class="text-xl font-bold mb-6 uppercase flex items-center gap-2">
+                <i data-lucide="radio"></i> Signal
+            </h2>
+            <button id="btn-sos" class="w-full py-12 glass border-red-500/50 text-red-500 mb-6 flex flex-col items-center gap-4 active:bg-red-500 active:text-white transition-all">
+                <i data-lucide="flame" class="w-12 h-12"></i>
+                <span class="font-black text-2xl tracking-[0.3em]">S.O.S STROBE</span>
             </button>
             <div class="grid grid-cols-2 gap-4">
-                <button id="btn-torch" class="glass p-6 flex flex-col items-center gap-2 active:bg-white active:text-black">
-                    <i data-lucide="sun" class="w-6 h-6"></i>
-                    <span class="text-xs font-bold">TORCH</span>
+                <button id="btn-torch" class="glass py-8 flex flex-col items-center gap-2 active:bg-white active:text-black">
+                    <i data-lucide="flashlight" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-bold uppercase">Flashlight</span>
                 </button>
-                <button id="btn-whistle" class="glass p-6 flex flex-col items-center gap-2 active:bg-green-500 active:text-black">
-                    <i data-lucide="volume-2" class="w-6 h-6"></i>
-                    <span class="text-xs font-bold">WHISTLE</span>
+                <button id="btn-whistle" class="glass py-8 flex flex-col items-center gap-2 active:bg-green-500 active:text-black">
+                    <i data-lucide="megaphone" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-bold uppercase">Whistle</span>
                 </button>
             </div>
         </div>
 
     </main>
 
-    <!-- FOOTER NAV -->
-    <nav class="bg-black border-t border-white/10 flex justify-around p-2 pb-6 z-50">
-        <button class="nav-btn active flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-nav">
-            <i data-lucide="compass" class="w-5 h-5"></i>
-            <span class="text-[8px] uppercase font-bold">Nav</span>
+    <!-- FOOTER NAV (STICKY) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-white/10 flex justify-around p-3 pb-8 z-50">
+        <button class="nav-btn active flex flex-col items-center gap-1.5 flex-1 transition-all" data-target="tool-nav">
+            <i data-lucide="navigation" class="w-6 h-6"></i>
+            <span class="text-[8px] uppercase font-bold tracking-widest">Nav</span>
         </button>
-        <button class="nav-btn text-white/30 flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-range">
-            <i data-lucide="scan" class="w-5 h-5"></i>
-            <span class="text-[8px] uppercase font-bold">Range</span>
+        <button class="nav-btn text-white/20 flex flex-col items-center gap-1.5 flex-1 transition-all" data-target="tool-range">
+            <i data-lucide="crosshair" class="w-6 h-6"></i>
+            <span class="text-[8px] uppercase font-bold tracking-widest">Range</span>
         </button>
-        <button class="nav-btn text-white/30 flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-weather">
-            <i data-lucide="cloud-rain" class="w-5 h-5"></i>
-            <span class="text-[8px] uppercase font-bold">Env</span>
+        <button class="nav-btn text-white/20 flex flex-col items-center gap-1.5 flex-1 transition-all" data-target="tool-weather">
+            <i data-lucide="cloud-sun" class="w-6 h-6"></i>
+            <span class="text-[8px] uppercase font-bold tracking-widest">Env</span>
         </button>
-        <button class="nav-btn text-white/30 flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-signal">
-            <i data-lucide="radio" class="w-5 h-5"></i>
-            <span class="text-[8px] uppercase font-bold">Comms</span>
+        <button class="nav-btn text-white/20 flex flex-col items-center gap-1.5 flex-1 transition-all" data-target="tool-signal">
+            <i data-lucide="radio" class="w-6 h-6"></i>
+            <span class="text-[8px] uppercase font-bold tracking-widest">Comms</span>
         </button>
     </nav>
 
-    <!-- OVERLAYS -->
+    <!-- FLASH LAYER -->
     <div id="flash-overlay" class="fixed inset-0 bg-white z-[200] hidden"></div>
 
     <script>
-        // --- CORE SYSTEM ---
         const state = {
             heading: 0,
             lat: 0, lon: 0,
             waypoint: null,
-            isLocked: false,
-            pitch: 0
+            targetBearing: 0,
+            pitch: 0,
+            compassType: 'NONE'
         };
 
         lucide.createIcons();
 
-        // --- NAVIGATION ENGINE (THE FIX) ---
+        // --- COMPASS & SENSORS ENGINE ---
         async function initSensors() {
-            // 1. Compass Fix: Handling Android & iOS Permissions
+            // Logic for Hardware Orientation (Magnetometer)
             if (window.DeviceOrientationEvent) {
                 if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    const res = await DeviceOrientationEvent.requestPermission();
-                    if (res === 'granted') window.addEventListener('deviceorientation', handleOrientation);
+                    const status = await DeviceOrientationEvent.requestPermission();
+                    if (status === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    }
                 } else {
-                    // Android usually provides absolute orientation
-                    window.addEventListener('deviceorientationabsolute', handleOrientation);
+                    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+                    window.addEventListener('deviceorientation', handleOrientation, true);
                 }
             }
 
-            // 2. GPS Fix: Persistent Watch
+            // GPS Logic
             if ("geolocation" in navigator) {
                 navigator.geolocation.watchPosition(updateGPS, handleGPSError, {
                     enableHighAccuracy: true,
-                    maximumAge: 1000,
-                    timeout: 10000
+                    maximumAge: 0,
+                    timeout: 5000
                 });
             }
         }
 
         function handleOrientation(e) {
-            let heading = 0;
-            // iOS Hardware Compass
+            let h = 0;
+            let type = 'GYRO/MAG';
+
+            // Check for iOS Compass Heading
             if (e.webkitCompassHeading) {
-                heading = e.webkitCompassHeading;
-            } else if (e.absolute) {
-                // Android Hardware Compass
-                heading = 360 - e.alpha;
+                h = e.webkitCompassHeading;
+                type = 'HARDWARE-iOS';
+            } 
+            // Check for Absolute Alpha (Android)
+            else if (e.absolute === true && e.alpha !== null) {
+                h = 360 - e.alpha;
+                type = 'HARDWARE-AND';
+            }
+            // Fallback to relative alpha if nothing else exists
+            else if (e.alpha !== null) {
+                h = 360 - e.alpha;
+                type = 'RELATIVE-MAG';
             }
 
-            state.heading = heading;
-            state.pitch = e.beta; // Used for rangefinder
+            state.heading = h;
+            state.pitch = e.beta;
+            state.compassType = type;
 
-            // Update UI
-            const ring = document.getElementById('compass-ring');
-            ring.style.transform = `rotate(${-heading}deg)`;
-            
-            document.getElementById('heading-display').innerText = `${Math.round(heading).toString().padStart(3, '0')}°`;
-            document.getElementById('cardinal-display').innerText = getCardinal(heading);
-
-            updateWaypointUI();
+            updateCompassUI();
         }
 
         function updateGPS(pos) {
             state.lat = pos.coords.latitude;
             state.lon = pos.coords.longitude;
             
+            // If the phone doesn't have a magnetometer, use GPS heading (movement based)
+            if (state.compassType === 'NONE' && pos.coords.heading !== null) {
+                state.heading = pos.coords.heading;
+                state.compassType = 'GPS-MOTION';
+                updateCompassUI();
+            }
+
             const acc = pos.coords.accuracy;
-            const indicator = document.getElementById('gps-indicator');
+            const ind = document.getElementById('gps-indicator');
             const statusText = document.getElementById('gps-status-text');
 
-            if (acc < 20) {
-                indicator.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#4ade80]";
+            if (acc < 15) {
+                ind.className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_#4ade80]";
                 statusText.innerText = `GPS: LOCK (${Math.round(acc)}m)`;
-            } else {
-                indicator.className = "w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_5px_orange]";
-                statusText.innerText = "GPS: WEAK LOCK";
+            } else if (acc < 50) {
+                ind.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-[0_0_10px_yellow]";
+                statusText.innerText = "GPS: ACCURACY LOW";
             }
 
             document.getElementById('lat-val').innerText = state.lat.toFixed(5);
             document.getElementById('lon-val').innerText = state.lon.toFixed(5);
             document.getElementById('acc-val').innerText = `±${Math.round(acc)}m`;
-            document.getElementById('acc-val').className = acc < 20 ? "text-green-400 text-sm font-bold" : "text-orange-400 text-sm font-bold";
-            document.getElementById('alt-val').innerText = pos.coords.altitude ? `${Math.round(pos.coords.altitude)} m` : '-- m';
+            document.getElementById('acc-val').className = acc < 20 ? "text-green-400 text-sm font-bold" : "text-yellow-400 text-sm font-bold";
+            document.getElementById('sensor-type').innerText = state.compassType;
 
             if (state.waypoint) updateWaypointData();
         }
 
-        function handleGPSError(err) {
-            document.getElementById('gps-status-text').innerText = "GPS: PERMISSION DENIED";
+        function updateCompassUI() {
+            const ring = document.getElementById('compass-ring');
+            ring.style.transform = `rotate(${-state.heading}deg)`;
+            
+            document.getElementById('heading-display').innerText = `${Math.round(state.heading).toString().padStart(3, '0')}°`;
+            document.getElementById('cardinal-display').innerText = getCardinal(state.heading);
+
+            if (state.waypoint) {
+                const pointer = document.getElementById('target-pointer');
+                pointer.style.display = 'block';
+                // Rotate pointer relative to current heading
+                pointer.style.transform = `translateX(-50%) rotate(${state.targetBearing}deg)`;
+            }
         }
 
-        // --- WAYPOINT LOGIC ---
+        function handleGPSError() {
+            document.getElementById('gps-status-text').innerText = "GPS: ERROR";
+        }
+
+        // --- WAYPOINT ---
         document.getElementById('btn-lock-gps').addEventListener('click', () => {
             if (!state.lat) return;
             state.waypoint = { lat: state.lat, lon: state.lon };
-            document.getElementById('target-pointer').style.display = 'block';
             updateWaypointData();
-            
-            // Haptic feedback
-            if (navigator.vibrate) navigator.vibrate(50);
+            if (navigator.vibrate) navigator.vibrate(100);
         });
 
         function updateWaypointData() {
@@ -395,119 +436,96 @@
             document.getElementById('waypoint-bearing').innerText = `${Math.round(bearing)}°`;
         }
 
-        function updateWaypointUI() {
-            if (!state.waypoint) return;
-            const pointer = document.getElementById('target-pointer');
-            // We rotate the pointer to the absolute bearing of the target
-            pointer.style.transform = `translateX(-50%) rotate(${state.targetBearing}deg)`;
-        }
-
-        // --- RANGEFINDER LOGIC ---
-        const heightInput = document.getElementById('target-height');
-        heightInput.addEventListener('input', (e) => {
-            const val = e.target.value;
-            document.getElementById('height-label').innerText = `${val}m`;
+        // --- RANGEFINDER ---
+        const hInput = document.getElementById('target-height');
+        hInput.addEventListener('input', (e) => {
+            document.getElementById('height-label').innerText = `${e.target.value}m`;
             updateRange();
         });
 
         function updateRange() {
-            // Very rough estimation based on pitch angle relative to horizontal
-            // d = h / tan(theta)
-            const angle = Math.abs(state.pitch);
-            if (angle < 1 || angle > 89) {
-                document.getElementById('range-val').innerText = "-- m";
+            const angle = Math.abs(state.pitch || 0);
+            if (angle < 1 || angle > 85) {
+                document.getElementById('range-val').innerText = "--.- m";
                 return;
             }
-            const dist = heightInput.value / Math.tan(angle * Math.PI / 180);
+            // dist = height / tan(theta)
+            const dist = hInput.value / Math.tan(angle * Math.PI / 180);
             document.getElementById('range-val').innerText = `${dist.toFixed(1)} m`;
         }
 
-        // --- WEATHER ENGINE ---
-        function updateWeather() {
-            // Simulated if no hardware pressure sensor
-            const basePressure = 1013.25;
-            document.getElementById('baro-val').innerText = basePressure.toFixed(1);
-            
+        // --- ENVIRONMENT ---
+        function updateEnvironment() {
             const now = new Date();
             const sunset = new Date();
-            sunset.setHours(18, 45, 0);
+            sunset.setHours(19, 15, 0); // Mock sunset
             
-            document.getElementById('sunset-time').innerText = "18:45";
+            document.getElementById('sunset-time').innerText = "19:15";
             const diff = (sunset - now) / (1000 * 60 * 60);
-            document.getElementById('sun-hours').innerText = diff > 0 ? diff.toFixed(1) : "0.0";
+            document.getElementById('sun-hours').innerText = diff > 0 ? `${diff.toFixed(1)}h` : "0.0h";
         }
-
-        // --- SIGNALING ENGINE ---
-        const btnSos = document.getElementById('btn-sos');
-        const flash = document.getElementById('flash-overlay');
-        let sosInterval;
-
-        btnSos.addEventListener('click', () => {
-            if (sosInterval) {
-                clearInterval(sosInterval);
-                sosInterval = null;
-                flash.style.display = 'none';
-                btnSos.classList.remove('bg-red-500', 'text-black');
-            } else {
-                btnSos.classList.add('bg-red-500', 'text-black');
-                let step = 0;
-                const pattern = [200, 200, 200, 200, 200, 600, 600, 200, 600, 200, 600, 600, 200, 200, 200, 200, 200, 2000]; 
-                sosInterval = setInterval(() => {
-                    flash.style.display = flash.style.display === 'none' ? 'block' : 'none';
-                }, 300);
-            }
-        });
 
         // --- UTILS ---
         function getCardinal(deg) {
-            const dirs = ['NORTH', 'NORTH-EAST', 'EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST'];
-            return dirs[Math.round(deg / 45) % 8];
+            const dirs = ['NORTH', 'NE', 'EAST', 'SE', 'SOUTH', 'SW', 'WEST', 'NW', 'NORTH'];
+            return dirs[Math.round(deg / 45)];
         }
 
         function haversine(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const dLat = (lat2-lat1) * Math.PI/180;
+            const dLon = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         function calculateBearing(lat1, lon1, lat2, lon2) {
             const y = Math.sin((lon2-lon1) * Math.PI/180) * Math.cos(lat2 * Math.PI/180);
-            const x = Math.cos(lat1 * Math.PI/180) * Math.sin(lat2 * Math.PI/180) -
-                      Math.sin(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.cos((lon2-lon1) * Math.PI/180);
+            const x = Math.cos(lat1*Math.PI/180) * Math.sin(lat2*Math.PI/180) -
+                      Math.sin(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.cos((lon2-lon1)*Math.PI/180);
             return (Math.atan2(y, x) * 180/Math.PI + 360) % 360;
         }
 
-        // --- INITIALIZATION ---
+        // --- SYSTEM INIT ---
         document.getElementById('btn-init').addEventListener('click', () => {
             document.getElementById('init-screen').style.display = 'none';
             initSensors();
-            updateWeather();
+            updateEnvironment();
+            
             setInterval(() => {
-                document.getElementById('time-text').innerText = new Date().toTimeString().split(' ')[0];
+                const d = new Date();
+                document.getElementById('time-text').innerText = d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
                 updateRange();
             }, 1000);
         });
 
-        // Battery
-        navigator.getBattery?.().then(batt => {
-            const update = () => document.getElementById('batt-text').innerText = `BATT: ${Math.round(batt.level * 100)}%`;
-            update();
-            batt.onlevelchange = update;
-        });
+        // Battery logic
+        if (navigator.getBattery) {
+            navigator.getBattery().then(b => {
+                const upd = () => document.getElementById('batt-text').innerText = `${Math.round(b.level * 100)}%`;
+                upd(); b.onlevelchange = upd;
+            });
+        }
 
-        // Nav Logic
+        // Navigation tab logic
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'text-white/30'));
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'text-white/20'));
                 btn.classList.add('active');
                 document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
                 document.getElementById(btn.dataset.target).classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Reset scroll on tab change
                 if (navigator.vibrate) navigator.vibrate(10);
             });
+        });
+
+        // Torch toggle
+        let torchOn = false;
+        document.getElementById('btn-torch').addEventListener('click', function() {
+            torchOn = !torchOn;
+            this.style.backgroundColor = torchOn ? 'white' : 'transparent';
+            this.style.color = torchOn ? 'black' : 'inherit';
         });
 
     </script>
