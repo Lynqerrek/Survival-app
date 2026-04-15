@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Survival OS v2.5</title>
+    <title>Survival OS v3.0 - Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -15,7 +15,6 @@
             --danger: #ef4444;
             --waypoint: #3b82f6;
             --bg: #050505;
-            --bg-panel: #0a0c0a;
         }
 
         body {
@@ -25,919 +24,492 @@
             overscroll-behavior-y: contain;
             user-select: none;
             -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
-
-        ::-webkit-scrollbar { display: none; }
 
         .tool-panel {
             display: none;
-            animation: fadeIn 0.2s ease-out;
+            animation: slideUp 0.3s ease-out;
             height: 100%;
             overflow-y: auto;
-            padding-bottom: 2rem;
+            padding-bottom: 5rem;
         }
 
         .tool-panel.active { display: flex; flex-direction: column; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Compass Styles */
-        .compass-container {
+        /* HARDWARE COMPASS */
+        .compass-ring {
             position: relative;
-            width: 220px;
-            height: 220px;
+            width: 260px;
+            height: 260px;
+            border: 3px solid var(--neon);
             border-radius: 50%;
-            border: 2px solid var(--neon);
-            box-shadow: 0 0 15px var(--neon-dim), inset 0 0 15px var(--neon-dim);
-            margin: 0 auto;
+            transition: transform 0.1s cubic-bezier(0.1, 0.5, 0.5, 1);
+            background: radial-gradient(circle, rgba(74,222,128,0.05) 0%, transparent 70%);
+            box-shadow: 0 0 20px var(--neon-dim);
         }
 
-        .compass-rose {
+        .compass-mark {
             position: absolute;
-            inset: 0;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%234ade80"><path d="M50 5 L55 45 L95 50 L55 55 L50 95 L45 55 L5 50 L45 45 Z" opacity="0.15"/><text x="50" y="15" fill="%23ef4444" font-size="14" text-anchor="middle" font-family="monospace" font-weight="bold">N</text><text x="50" y="93" fill="%234ade80" font-size="12" text-anchor="middle" font-family="monospace">S</text><text x="92" y="54" fill="%234ade80" font-size="12" text-anchor="middle" font-family="monospace">E</text><text x="8" y="54" fill="%234ade80" font-size="12" text-anchor="middle" font-family="monospace">W</text><circle cx="50" cy="50" r="3" fill="%234ade80"/></svg>') no-repeat center center;
-            background-size: cover;
-        }
-
-        .compass-arrow-fixed {
-            position: absolute;
-            top: 50px;
+            top: 5px;
             left: 50%;
             transform: translateX(-50%);
-            width: 4px;
-            height: 40px;
-            background: var(--danger);
-            border-radius: 2px;
-            z-index: 10;
-            box-shadow: 0 0 10px var(--danger);
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 1.2rem;
         }
 
-        .waypoint-marker {
+        .waypoint-pointer {
             position: absolute;
-            top: -6px;
+            top: -15px;
             left: 50%;
-            transform: translateX(-50%);
-            width: 14px;
-            height: 14px;
-            background-color: var(--waypoint);
-            border-radius: 50%;
-            box-shadow: 0 0 12px var(--waypoint);
-            border: 2px solid #000;
+            margin-left: -10px;
+            width: 20px;
+            height: 20px;
+            background: var(--waypoint);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            box-shadow: 0 0 10px var(--waypoint);
+            display: none;
         }
 
-        /* Level Styles */
-        .bubble-level {
-            width: 180px; height: 180px;
-            border-radius: 50%;
-            border: 2px solid var(--neon);
+        /* NEW: RANGEFINDER OVERLAY */
+        #camera-preview {
+            width: 100%;
+            height: 200px;
+            background: #111;
+            border: 1px solid var(--neon-dim);
             position: relative;
-            background: radial-gradient(circle, rgba(74,222,128,0.1) 0%, rgba(10,10,10,1) 80%);
-            margin: 0 auto;
+            overflow: hidden;
         }
-        .bubble {
-            width: 24px; height: 24px;
-            background-color: var(--danger);
-            border-radius: 50%;
+
+        .range-reticle {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px var(--danger);
-        }
-        .crosshair::before, .crosshair::after {
-            content: ''; position: absolute; background-color: var(--neon); opacity: 0.5;
-        }
-        .crosshair::before { top: 10%; bottom: 10%; left: 50%; width: 1px; transform: translateX(-50%); }
-        .crosshair::after { left: 10%; right: 10%; top: 50%; height: 1px; transform: translateY(-50%); }
-
-        /* General UI */
-        .glass-panel {
-            background: rgba(10, 15, 10, 0.6);
-            border: 1px solid var(--neon-dim);
-            border-radius: 8px;
+            width: 60px; height: 60px;
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
-        .btn-active {
-            background-color: var(--neon);
-            color: var(--bg);
-            box-shadow: 0 0 15px var(--neon);
+        /* GLASS MORPHISM */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(74, 222, 128, 0.1);
+            border-radius: 12px;
         }
 
-        #flash-overlay {
-            display: none; position: fixed; inset: 0; background-color: white; z-index: 9999;
-        }
-        
-        .bead {
-            width: 20px; height: 30px;
-            background: var(--neon);
-            border-radius: 4px;
-            opacity: 0.2;
-            transition: opacity 0.2s;
-        }
-        .bead.active {
-            opacity: 1;
-            box-shadow: 0 0 8px var(--neon);
+        .nav-btn.active {
+            color: var(--neon);
+            filter: drop-shadow(0 0 5px var(--neon));
         }
     </style>
 </head>
-<body class="h-screen w-full flex justify-center">
+<body class="h-screen w-full flex flex-col overflow-hidden">
 
-    <!-- Flashlight / SOS Overlay -->
-    <div id="flash-overlay"></div>
-
-    <!-- Initialization / Permissions Screen -->
-    <div id="init-screen" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-6 text-center">
-        <i data-lucide="shield-check" class="w-24 h-24 text-green-400 mb-6 animate-pulse"></i>
-        <h1 class="text-4xl font-bold mb-2 tracking-widest text-white">SURVIVAL<span class="text-green-400">OS</span></h1>
-        <p class="text-sm text-green-500/70 mb-8 max-w-sm uppercase tracking-wide">
-            Sensors • GPS • Tracking • Comms<br><br>
-            <span class="text-xs text-red-400">Requires location and motion permissions to function accurately.</span>
-        </p>
-        <button id="btn-init" class="px-8 py-4 border-2 border-green-500 text-green-400 font-bold text-xl rounded shadow-[0_0_20px_rgba(74,222,128,0.2)] hover:bg-green-500 hover:text-black transition-all uppercase tracking-widest active:scale-95">
-            Initialize Systems
+    <!-- INITIALIZATION OVERLAY -->
+    <div id="init-screen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-8 text-center">
+        <div class="mb-8 relative">
+            <i data-lucide="compass" class="w-20 h-20 text-green-400 animate-spin" style="animation-duration: 4s;"></i>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="satellite" class="w-6 h-6 text-blue-400"></i>
+            </div>
+        </div>
+        <h1 class="text-3xl font-bold tracking-tighter mb-4">SURVIVAL<span class="text-white">OS</span> v3.0</h1>
+        <p class="text-xs text-green-500/60 uppercase tracking-widest mb-8">Accessing Magnetometer • Calibrating GPS • Initializing Barometer</p>
+        <button id="btn-init" class="w-full max-w-xs py-4 border-2 border-green-500 bg-green-500/10 text-green-400 font-bold rounded-lg active:bg-green-500 active:text-black transition-all">
+            ENGAGE SENSORS
         </button>
     </div>
 
-    <!-- Main Mobile Container -->
-    <div class="w-full max-w-md h-full flex flex-col relative border-x border-green-500/20 bg-[#080a08]">
+    <!-- STATUS BAR -->
+    <header class="p-3 border-b border-white/10 flex justify-between items-center bg-black/50 backdrop-blur-md z-50">
+        <div class="flex items-center gap-2">
+            <div id="gps-indicator" class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_red]"></div>
+            <span class="text-[10px] uppercase font-bold tracking-tighter" id="gps-status-text">GPS: DISCONNECTED</span>
+        </div>
+        <div class="flex gap-4 items-center">
+            <span class="text-[10px] font-mono" id="batt-text">BATT: --%</span>
+            <span class="text-[10px] font-mono" id="time-text">00:00:00</span>
+        </div>
+    </header>
+
+    <!-- MAIN TOOLS CONTAINER -->
+    <main class="flex-1 relative overflow-hidden">
         
-        <!-- Header StatusBar -->
-        <header class="flex justify-between items-center p-3 border-b border-green-500/20 bg-black/80 z-20">
-            <div class="flex items-center gap-2">
-                <i data-lucide="satellite" class="w-4 h-4"></i>
-                <span class="font-bold tracking-wider text-sm">SYS.ONLINE</span>
-            </div>
-            <div class="flex items-center gap-4 text-xs font-bold tracking-widest">
-                <span id="gps-status" class="text-red-500">GPS: WAIT</span>
-                <span id="batt-status">BATT: --%</span>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 overflow-hidden relative">
-            
-            <!-- 1. NAV & GPS TOOL -->
-            <div id="tool-nav" class="tool-panel active p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl tracking-widest text-white">NAVIGATION</h2>
-                    <span id="heading-dir" class="text-2xl font-bold text-green-400">N</span>
-                </div>
+        <!-- TOOL 1: NAVIGATION (FIXED) -->
+        <div id="tool-nav" class="tool-panel active p-4">
+            <div class="flex flex-col items-center mb-6">
+                <div class="text-5xl font-bold mb-2 tracking-tighter" id="heading-display">000°</div>
+                <div class="text-sm text-green-500/70 mb-6 uppercase tracking-widest" id="cardinal-display">NORTH</div>
                 
-                <!-- Compass -->
-                <div class="relative w-full flex justify-center mb-6">
-                    <div class="compass-arrow-fixed"></div>
-                    <div class="compass-container" id="compass-dial">
-                        <div class="compass-rose"></div>
-                        <!-- Waypoint Tracker attached to compass -->
-                        <div id="waypoint-container" style="position: absolute; inset: 0; display: none; transition: transform 0.2s linear;">
-                            <div class="waypoint-marker"></div>
-                        </div>
-                    </div>
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="text-4xl font-bold text-white bg-black/50 px-3 py-1 rounded backdrop-blur-sm" id="heading-val">0°</div>
-                    </div>
-                </div>
-
-                <!-- GPS Data -->
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="glass-panel p-3 text-center">
-                        <div class="text-[10px] text-green-500/70 mb-1 uppercase">Latitude</div>
-                        <div class="text-base font-bold text-white" id="gps-lat">--.-----</div>
-                    </div>
-                    <div class="glass-panel p-3 text-center">
-                        <div class="text-[10px] text-green-500/70 mb-1 uppercase">Longitude</div>
-                        <div class="text-base font-bold text-white" id="gps-lon">--.-----</div>
-                    </div>
-                    <div class="glass-panel p-3 text-center">
-                        <div class="text-[10px] text-green-500/70 mb-1 uppercase">Altitude / Acc</div>
-                        <div class="text-sm text-white"><span id="gps-alt">--</span>m <span class="text-green-500/50">±<span id="gps-acc">--</span>m</span></div>
-                    </div>
-                    <div class="glass-panel p-3 text-center flex items-center justify-center">
-                        <button id="btn-refresh-gps" class="text-xs uppercase border border-green-500/50 px-3 py-1 rounded text-green-400 active:bg-green-500 active:text-black">
-                            Force Lock
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Waypoint System -->
-                <div class="glass-panel p-4 border-blue-500/30 bg-blue-900/10">
-                    <h3 class="text-sm tracking-widest text-blue-400 mb-3 flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-4 h-4"></i> WAYPOINT TRACKER
-                    </h3>
-                    <button id="btn-set-camp" class="w-full py-2 mb-3 bg-blue-500/20 border border-blue-500 text-blue-400 rounded text-sm uppercase tracking-wider active:bg-blue-500 active:text-black transition-colors">
-                        Lock Current Coordinates
-                    </button>
-                    <div class="flex justify-between items-center text-sm border-t border-blue-500/20 pt-2">
-                        <span class="text-blue-500/70">DISTANCE:</span>
-                        <span id="camp-dist" class="text-white font-bold">NOT SET</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm mt-1">
-                        <span class="text-blue-500/70">BEARING:</span>
-                        <span id="camp-bearing" class="text-white font-bold">--°</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. PACING & CHRONO TOOL -->
-            <div id="tool-pacing" class="tool-panel p-4">
-                <h2 class="text-xl mb-4 tracking-widest text-white">PACE & CHRONO</h2>
-                
-                <!-- Time -->
-                <div class="glass-panel p-4 mb-6 text-center">
-                    <div class="text-[10px] text-green-500/70 mb-1 uppercase tracking-widest">Local Time</div>
-                    <div class="text-4xl font-bold text-white mb-2" id="local-time">00:00:00</div>
-                    <div class="text-[10px] text-green-500/70 mb-1 uppercase tracking-widest border-t border-green-500/20 pt-2">UTC (Zulu) Time</div>
-                    <div class="text-xl text-green-400" id="utc-time">00:00:00 Z</div>
-                </div>
-
-                <!-- Pace Counter (Ranger Beads) -->
-                <div class="glass-panel p-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-sm tracking-widest text-white flex items-center gap-2">
-                            <i data-lucide="footprints" class="w-4 h-4"></i> RANGER BEADS
-                        </h3>
-                        <button id="btn-reset-pace" class="text-xs text-red-400 border border-red-500/30 px-2 py-1 rounded">RESET</button>
-                    </div>
+                <div class="relative">
+                    <!-- Fixed Pointer (The "Front" of your phone) -->
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-1 h-8 bg-red-500 z-10 shadow-[0_0_10px_red]"></div>
                     
-                    <div class="mb-4">
-                        <div class="text-xs text-green-500/70 mb-2 flex justify-between">
-                            <span>100 METERS</span>
-                            <span class="text-white font-bold"><span id="meters-count">0</span>00 m</span>
-                        </div>
-                        <div class="flex justify-between gap-1 mb-2" id="beads-100m">
-                            <!-- JS will populate 9 beads -->
-                        </div>
-                        <button id="btn-add-100m" class="w-full py-2 bg-green-500/10 border border-green-500/50 text-green-400 rounded text-xs active:bg-green-500 active:text-black">
-                            + 100m (Avg ~130 steps)
-                        </button>
-                    </div>
-
-                    <div class="border-t border-green-500/20 pt-4">
-                        <div class="text-xs text-green-500/70 mb-2 flex justify-between">
-                            <span>KILOMETERS</span>
-                            <span class="text-white font-bold"><span id="km-count">0</span> km</span>
-                        </div>
-                        <div class="flex gap-2 mb-2" id="beads-1km">
-                            <!-- JS will populate 4 beads -->
-                        </div>
-                        <button id="btn-add-1km" class="w-full py-2 bg-green-500/10 border border-green-500/50 text-green-400 rounded text-xs active:bg-green-500 active:text-black">
-                            + 1 km
-                        </button>
+                    <div class="compass-ring" id="compass-ring">
+                        <div class="compass-mark">N</div>
+                        <div class="absolute bottom-1 left-1/2 -translate-x-1/2">S</div>
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2">E</div>
+                        <div class="absolute left-2 top-1/2 -translate-y-1/2">W</div>
+                        <!-- Target Pointer -->
+                        <div id="target-pointer" class="waypoint-pointer"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. SIGNALING TOOL -->
-            <div id="tool-signal" class="tool-panel p-4">
-                <h2 class="text-xl mb-6 tracking-widest text-white">EMERGENCY COMMS</h2>
-                
-                <div class="space-y-4 mb-6">
-                    <button id="btn-whistle" class="w-full py-4 border border-red-500/50 bg-red-500/10 text-red-500 rounded flex items-center justify-center gap-3 transition-all active:scale-95">
-                        <i data-lucide="mic-vocal" class="w-6 h-6"></i>
-                        <div class="text-left">
-                            <div class="font-bold tracking-widest text-lg">SONIC WHISTLE</div>
-                            <div class="text-[10px] opacity-70">High-pitch Audio Piercer</div>
-                        </div>
-                    </button>
-
-                    <button id="btn-torch" class="w-full py-4 border border-green-400/50 bg-green-400/10 text-green-400 rounded flex items-center justify-center gap-3 transition-all active:scale-95">
-                        <i data-lucide="sun" class="w-6 h-6"></i>
-                        <div class="text-left">
-                            <div class="font-bold tracking-widest text-lg">SCREEN TORCH</div>
-                            <div class="text-[10px] opacity-70">Max Brightness White Screen</div>
-                        </div>
-                    </button>
-
-                    <button id="btn-sos" class="w-full py-4 border border-orange-500/50 bg-orange-500/10 text-orange-500 rounded flex items-center justify-center gap-3 transition-all active:scale-95">
-                        <i data-lucide="radio-tower" class="w-6 h-6"></i>
-                        <div class="text-left">
-                            <div class="font-bold tracking-widest text-lg">S.O.S STROBE</div>
-                            <div class="text-[10px] opacity-70">Standard Morse Distress</div>
-                        </div>
-                    </button>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="glass p-3">
+                    <div class="text-[9px] text-white/40 uppercase">Latitude</div>
+                    <div id="lat-val" class="text-sm font-bold">--.-----</div>
                 </div>
-
-                <!-- Custom Morse Real-Time Translator -->
-                <div class="glass-panel p-4">
-                    <h3 class="text-sm tracking-widest text-white mb-2">LIVE MORSE TRANSLATOR</h3>
-                    <input type="text" id="morse-input" placeholder="TYPE MESSAGE..." class="w-full bg-black border border-green-500/30 text-green-400 px-3 py-2 text-sm rounded mb-2 focus:outline-none focus:border-green-400 uppercase font-mono">
-                    
-                    <div class="min-h-[40px] bg-[#050505] p-2 border border-green-500/20 rounded mb-3 text-white font-bold tracking-widest break-words overflow-y-auto max-h-[100px]" id="morse-preview">
-                        ...
-                    </div>
-
-                    <button id="btn-morse-tx" class="w-full py-2 bg-green-500/20 border border-green-500 text-green-400 rounded text-sm font-bold tracking-wider active:bg-green-500 active:text-black">
-                        TRANSMIT SIGNAL
-                    </button>
+                <div class="glass p-3">
+                    <div class="text-[9px] text-white/40 uppercase">Longitude</div>
+                    <div id="lon-val" class="text-sm font-bold">--.-----</div>
+                </div>
+                <div class="glass p-3">
+                    <div class="text-[9px] text-white/40 uppercase">Accuracy</div>
+                    <div id="acc-val" class="text-sm font-bold text-red-400">NO LOCK</div>
+                </div>
+                <div class="glass p-3">
+                    <div class="text-[9px] text-white/40 uppercase">Altitude</div>
+                    <div id="alt-val" class="text-sm font-bold">-- m</div>
                 </div>
             </div>
 
-            <!-- 4. LEVEL TOOL -->
-            <div id="tool-level" class="tool-panel p-4 flex-col items-center justify-center">
-                <h2 class="text-xl mb-8 tracking-widest text-white self-start w-full">INCLINOMETER</h2>
-                
-                <div class="bubble-level mb-10">
-                    <div class="crosshair w-full h-full absolute inset-0"></div>
-                    <div class="bubble" id="level-bubble"></div>
+            <div class="glass p-4 border-blue-500/20 bg-blue-500/5">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-blue-400 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-3 h-3"></i> WAYPOINT: BASE CAMP
+                    </span>
+                    <button id="btn-lock-gps" class="text-[10px] px-2 py-1 border border-blue-400 rounded hover:bg-blue-400 hover:text-black">LOCK HERE</button>
                 </div>
-                
-                <div class="grid grid-cols-2 gap-8 text-center w-full max-w-[250px]">
-                    <div class="glass-panel p-3">
-                        <div class="text-xs text-green-500/70 mb-1">PITCH (Y)</div>
-                        <div class="text-2xl font-bold text-white" id="level-pitch">0°</div>
-                    </div>
-                    <div class="glass-panel p-3">
-                        <div class="text-xs text-green-500/70 mb-1">ROLL (X)</div>
-                        <div class="text-2xl font-bold text-white" id="level-roll">0°</div>
-                    </div>
-                </div>
-                <p class="text-xs text-green-500/50 mt-8 text-center px-4">Used for measuring slope angles, construction, and aiming antennas.</p>
-            </div>
-
-            <!-- 5. GUIDE TOOL -->
-            <div id="tool-guide" class="tool-panel p-4">
-                <h2 class="text-xl mb-4 tracking-widest text-white">SURVIVAL MANUAL</h2>
-                
-                <div class="space-y-4 pb-8">
-                    <!-- Rule of 3 -->
-                    <div class="glass-panel">
-                        <div class="p-3 border-b border-green-500/20 font-bold text-white bg-green-500/10 uppercase">The Rule of Threes</div>
-                        <div class="p-3 text-sm text-green-400/80 space-y-1">
-                            <p>You can survive roughly:</p>
-                            <ul class="list-disc pl-4 space-y-1 mt-1">
-                                <li><strong class="text-white">3 Minutes</strong> without breathable air.</li>
-                                <li><strong class="text-white">3 Hours</strong> without shelter in extreme conditions.</li>
-                                <li><strong class="text-white">3 Days</strong> without water.</li>
-                                <li><strong class="text-white">3 Weeks</strong> without food.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Fire -->
-                    <div class="glass-panel">
-                        <div class="p-3 border-b border-orange-500/20 font-bold text-orange-400 bg-orange-500/10 uppercase flex items-center gap-2">
-                            <i data-lucide="flame" class="w-4 h-4"></i> Fire Building
-                        </div>
-                        <div class="p-3 text-sm text-green-400/80">
-                            <p><strong>1. Tinder:</strong> Dry, hair-like material (dry grass, inner bark, pocket lint) that takes a spark.</p>
-                            <p><strong>2. Kindling:</strong> Twigs ranging from pencil-lead to thumb thickness. Must "snap" when broken.</p>
-                            <p><strong>3. Fuel:</strong> Wrist-thick or larger branches to sustain the fire.</p>
-                            <p class="mt-2 text-xs opacity-70">Tip: Build a "teepee" structure around tinder to allow oxygen flow.</p>
-                        </div>
-                    </div>
-
-                    <!-- Shelter -->
-                    <div class="glass-panel">
-                        <div class="p-3 border-b border-green-500/20 font-bold text-white bg-green-500/10 uppercase flex items-center gap-2">
-                            <i data-lucide="tent" class="w-4 h-4"></i> Immediate Shelter
-                        </div>
-                        <div class="p-3 text-sm text-green-400/80">
-                            <p><strong>Debris Hut:</strong></p>
-                            <ol class="list-decimal pl-4 mt-1 space-y-1">
-                                <li>Find a sturdy ridgepole (strong branch) and prop one end on a stump or rock.</li>
-                                <li>Lay side branches (ribs) along the ridgepole.</li>
-                                <li>Pile 2-3 feet of dry leaves/debris on top for insulation.</li>
-                                <li>Fill the inside with a thick bed of dry leaves to insulate yourself from the cold ground.</li>
-                            </ol>
-                        </div>
-                    </div>
-
-                    <!-- Water -->
-                    <div class="glass-panel">
-                        <div class="p-3 border-b border-blue-500/20 font-bold text-blue-400 bg-blue-500/10 uppercase flex items-center gap-2">
-                            <i data-lucide="droplet" class="w-4 h-4"></i> Water Purification
-                        </div>
-                        <div class="p-3 text-sm text-green-400/80">
-                            <p>1. <strong>Boil:</strong> Bring to rolling boil for 1 full minute (3 minutes at high altitude).</p>
-                            <p>2. <strong>Solar Still:</strong> Dig a hole, place container in center, cover hole with plastic sheet, place small rock over sheet center directly above container. Sun evaporates soil moisture into the cup.</p>
-                        </div>
-                    </div>
-
-                    <!-- Edibility -->
-                    <div class="glass-panel">
-                        <div class="p-3 border-b border-green-500/20 font-bold text-white bg-green-500/10 uppercase">Universal Edibility Test</div>
-                        <div class="p-3 text-xs text-green-400/80 space-y-2">
-                            <p class="text-red-400 font-bold">WARNING: Test only one part of one plant at a time. Fast for 8 hours prior.</p>
-                            <p><strong>1. Contact:</strong> Rub crushed plant on inner wrist/elbow. Wait 15 mins. If reaction occurs, discard.</p>
-                            <p><strong>2. Lip:</strong> Place small amount on outer lip for 3 mins.</p>
-                            <p><strong>3. Mouth:</strong> Chew small portion, hold in mouth 15 mins WITHOUT swallowing.</p>
-                            <p><strong>4. Swallow:</strong> Swallow small amount, wait 8 hours. If no ill effects, eat a small handful and wait 8 more hours. If safe, it's edible.</p>
-                        </div>
-                    </div>
-
-                    <!-- Ground Signals -->
-                    <div class="glass-panel">
-                        <div class="p-3 border-b border-green-500/20 font-bold text-white bg-green-500/10 uppercase">Ground to Air Signals</div>
-                        <div class="p-3 text-sm text-green-400/80 grid grid-cols-2 gap-2 text-center font-bold">
-                            <div class="bg-black/50 p-2 rounded border border-green-500/20">
-                                <span class="text-xl text-white block">V</span>
-                                <span class="text-[10px]">REQUIRE ASSISTANCE</span>
-                            </div>
-                            <div class="bg-black/50 p-2 rounded border border-green-500/20">
-                                <span class="text-xl text-white block">X</span>
-                                <span class="text-[10px]">REQUIRE MEDICAL</span>
-                            </div>
-                            <div class="bg-black/50 p-2 rounded border border-green-500/20">
-                                <span class="text-xl text-white block">N</span>
-                                <span class="text-[10px]">NO (NEGATIVE)</span>
-                            </div>
-                            <div class="bg-black/50 p-2 rounded border border-green-500/20">
-                                <span class="text-xl text-white block">Y</span>
-                                <span class="text-[10px]">YES (AFFIRMATIVE)</span>
-                            </div>
-                            <div class="col-span-2 text-xs font-normal mt-2">
-                                Make letters huge (at least 3 meters long) using contrasting materials (rocks, logs, bright clothes).
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex justify-between text-lg font-bold">
+                    <span id="waypoint-dist">-- m</span>
+                    <span id="waypoint-bearing" class="text-blue-400">---°</span>
                 </div>
             </div>
+        </div>
 
-        </main>
+        <!-- TOOL 2: RANGEFINDER (NEW) -->
+        <div id="tool-range" class="tool-panel p-4">
+            <h2 class="text-xl font-bold mb-4 uppercase tracking-tighter">Optic Rangefinder</h2>
+            <div id="camera-preview" class="rounded-lg mb-4 flex items-center justify-center">
+                <div class="range-reticle"></div>
+                <span class="text-[10px] text-white/20 uppercase">Camera Module Active</span>
+            </div>
+            <div class="glass p-4">
+                <label class="text-[10px] text-white/40 uppercase block mb-2">Target Height (Meters)</label>
+                <input type="range" id="target-height" min="0.5" max="3.0" step="0.1" value="1.7" class="w-full accent-green-500 mb-2">
+                <div class="flex justify-between text-xs font-mono mb-4">
+                    <span>0.5m</span>
+                    <span class="text-white font-bold" id="height-label">1.7m (Avg Adult)</span>
+                    <span>3.0m</span>
+                </div>
+                <div class="text-center p-4 bg-green-500/10 rounded border border-green-500/20">
+                    <div class="text-[10px] uppercase text-green-500/60">Estimated Distance</div>
+                    <div class="text-4xl font-bold" id="range-val">-- m</div>
+                </div>
+            </div>
+            <p class="text-[10px] text-white/30 mt-4 leading-tight">Tilt device to align reticle with object base and top to calculate distance based on angular size.</p>
+        </div>
 
-        <!-- Bottom Navigation -->
-        <nav class="flex border-t border-green-500/20 bg-[#050505] pb-safe z-20">
-            <button class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-green-400" data-target="tool-nav">
-                <i data-lucide="compass" class="w-5 h-5"></i>
-                <span class="text-[9px] uppercase tracking-wider">Nav</span>
+        <!-- TOOL 3: WEATHER & BARO (NEW) -->
+        <div id="tool-weather" class="tool-panel p-4">
+            <h2 class="text-xl font-bold mb-4 uppercase tracking-tighter">Atmospheric Monitor</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div class="glass p-6 text-center">
+                    <div class="text-[10px] text-white/40 uppercase mb-2">Barometric Pressure</div>
+                    <div class="text-5xl font-bold mb-2" id="baro-val">----</div>
+                    <div class="text-xs font-bold text-green-400" id="baro-trend">STEADY</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass p-4">
+                        <div class="text-[10px] text-white/40 uppercase">Hours of Day</div>
+                        <div class="text-xl font-bold" id="sun-hours">--:--</div>
+                    </div>
+                    <div class="glass p-4">
+                        <div class="text-[10px] text-white/40 uppercase">Sunset</div>
+                        <div class="text-xl font-bold" id="sunset-time">--:--</div>
+                    </div>
+                </div>
+                <div class="glass p-4 border-orange-500/20">
+                    <h3 class="text-xs font-bold text-orange-400 mb-2">STORM ALERT SYSTEM</h3>
+                    <p class="text-[10px] text-white/60">Monitors rapid pressure drops (>3hPa/hr). High accuracy requires internal hardware barometer.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOL 4: SIGNALING -->
+        <div id="tool-signal" class="tool-panel p-4">
+            <h2 class="text-xl font-bold mb-6 uppercase tracking-tighter">Emergency Signaling</h2>
+            <button id="btn-sos" class="w-full py-8 glass border-red-500/30 text-red-500 mb-4 flex flex-col items-center gap-2 active:scale-95 transition-transform">
+                <i data-lucide="alert-triangle" class="w-10 h-10"></i>
+                <span class="font-bold text-xl tracking-widest">S.O.S STROBE</span>
             </button>
-            <button class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-green-500/40 hover:text-green-400 transition-colors" data-target="tool-pacing">
-                <i data-lucide="timer" class="w-5 h-5"></i>
-                <span class="text-[9px] uppercase tracking-wider">Pace</span>
-            </button>
-            <button class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-green-500/40 hover:text-green-400 transition-colors" data-target="tool-signal">
-                <i data-lucide="radio" class="w-5 h-5"></i>
-                <span class="text-[9px] uppercase tracking-wider">Signal</span>
-            </button>
-            <button class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-green-500/40 hover:text-green-400 transition-colors" data-target="tool-level">
-                <i data-lucide="scale-3d" class="w-5 h-5"></i>
-                <span class="text-[9px] uppercase tracking-wider">Level</span>
-            </button>
-            <button class="nav-btn flex-1 py-3 flex flex-col items-center gap-1 text-green-500/40 hover:text-green-400 transition-colors" data-target="tool-guide">
-                <i data-lucide="book-open" class="w-5 h-5"></i>
-                <span class="text-[9px] uppercase tracking-wider">Guide</span>
-            </button>
-        </nav>
-    </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="btn-torch" class="glass p-6 flex flex-col items-center gap-2 active:bg-white active:text-black">
+                    <i data-lucide="sun" class="w-6 h-6"></i>
+                    <span class="text-xs font-bold">TORCH</span>
+                </button>
+                <button id="btn-whistle" class="glass p-6 flex flex-col items-center gap-2 active:bg-green-500 active:text-black">
+                    <i data-lucide="volume-2" class="w-6 h-6"></i>
+                    <span class="text-xs font-bold">WHISTLE</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER NAV -->
+    <nav class="bg-black border-t border-white/10 flex justify-around p-2 pb-6 z-50">
+        <button class="nav-btn active flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-nav">
+            <i data-lucide="compass" class="w-5 h-5"></i>
+            <span class="text-[8px] uppercase font-bold">Nav</span>
+        </button>
+        <button class="nav-btn text-white/30 flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-range">
+            <i data-lucide="scan" class="w-5 h-5"></i>
+            <span class="text-[8px] uppercase font-bold">Range</span>
+        </button>
+        <button class="nav-btn text-white/30 flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-weather">
+            <i data-lucide="cloud-rain" class="w-5 h-5"></i>
+            <span class="text-[8px] uppercase font-bold">Env</span>
+        </button>
+        <button class="nav-btn text-white/30 flex flex-col items-center gap-1 flex-1 py-2" data-target="tool-signal">
+            <i data-lucide="radio" class="w-5 h-5"></i>
+            <span class="text-[8px] uppercase font-bold">Comms</span>
+        </button>
+    </nav>
+
+    <!-- OVERLAYS -->
+    <div id="flash-overlay" class="fixed inset-0 bg-white z-[200] hidden"></div>
 
     <script>
-        // Haptic feedback helper
-        const vibrate = (ms) => { if (navigator.vibrate) navigator.vibrate(ms); };
+        // --- CORE SYSTEM ---
+        const state = {
+            heading: 0,
+            lat: 0, lon: 0,
+            waypoint: null,
+            isLocked: false,
+            pitch: 0
+        };
 
-        // Initialize Icons
         lucide.createIcons();
 
-        // Navigation Logic
-        const navBtns = document.querySelectorAll('.nav-btn');
-        const toolPanels = document.querySelectorAll('.tool-panel');
-
-        navBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                vibrate(10);
-                navBtns.forEach(b => {
-                    b.classList.remove('text-green-400');
-                    b.classList.add('text-green-500/40');
-                });
-                btn.classList.remove('text-green-500/40');
-                btn.classList.add('text-green-400');
-
-                const targetId = btn.getAttribute('data-target');
-                toolPanels.forEach(panel => panel.classList.remove('active'));
-                document.getElementById(targetId).classList.add('active');
-            });
-        });
-
-        // --- SYSTEM INIT ---
-        document.getElementById('btn-init').addEventListener('click', async () => {
-            vibrate(30);
-            document.getElementById('init-screen').style.display = 'none';
-            initAudio();
-            initSensors();
-            startGPS();
-            checkBattery();
-            setInterval(updateTime, 1000);
-            updateTime();
-        });
-
-        // --- 1. COMPASS & LEVEL (SMOOTHED) ---
-        let displayHeading = 0;
-        let smoothedPitch = 0;
-        let smoothedRoll = 0;
-
+        // --- NAVIGATION ENGINE (THE FIX) ---
         async function initSensors() {
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                    }
-                } catch (e) { console.error(e); }
-            } else {
-                window.addEventListener('deviceorientationabsolute', handleOrientation);
-                window.addEventListener('deviceorientation', handleOrientation);
-            }
-        }
-
-        function handleOrientation(event) {
-            // COMPASS MATH
-            let rawHeading = null;
-            if (event.webkitCompassHeading !== undefined) {
-                rawHeading = event.webkitCompassHeading; // iOS
-            } else if (event.absolute && event.alpha !== null) {
-                rawHeading = 360 - event.alpha; // Android
+            // 1. Compass Fix: Handling Android & iOS Permissions
+            if (window.DeviceOrientationEvent) {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    const res = await DeviceOrientationEvent.requestPermission();
+                    if (res === 'granted') window.addEventListener('deviceorientation', handleOrientation);
+                } else {
+                    // Android usually provides absolute orientation
+                    window.addEventListener('deviceorientationabsolute', handleOrientation);
+                }
             }
 
-            if (rawHeading !== null) {
-                // Shortest delta to avoid 360 -> 0 jumping
-                let diff = rawHeading - (displayHeading % 360);
-                if (diff > 180) diff -= 360;
-                if (diff < -180) diff += 360;
-                
-                displayHeading += diff * 0.15; 
-                
-                document.getElementById('compass-dial').style.transform = `rotate(${-displayHeading}deg)`;
-                
-                let normalizedHeading = (displayHeading % 360);
-                if(normalizedHeading < 0) normalizedHeading += 360;
-                
-                document.getElementById('heading-val').innerText = `${Math.round(normalizedHeading)}°`;
-                document.getElementById('heading-dir').innerText = getCardinal(normalizedHeading);
-            }
-
-            // LEVEL MATH
-            let p = event.beta || 0;
-            let r = event.gamma || 0;
-            
-            smoothedPitch += (p - smoothedPitch) * 0.2;
-            smoothedRoll += (r - smoothedRoll) * 0.2;
-
-            let bPitch = Math.max(-90, Math.min(90, smoothedPitch));
-            let bRoll = Math.max(-90, Math.min(90, smoothedRoll));
-            
-            const maxPx = 75; 
-            let x = (bRoll / 90) * maxPx;
-            let y = (bPitch / 90) * maxPx;
-
-            const bubble = document.getElementById('level-bubble');
-            bubble.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-            
-            document.getElementById('level-pitch').innerText = `${Math.round(smoothedPitch)}°`;
-            document.getElementById('level-roll').innerText = `${Math.round(smoothedRoll)}°`;
-
-            if (Math.abs(smoothedPitch) < 3 && Math.abs(smoothedRoll) < 3) {
-                bubble.style.backgroundColor = '#4ade80';
-                bubble.style.boxShadow = '0 0 15px #4ade80';
-            } else {
-                bubble.style.backgroundColor = '#ef4444';
-                bubble.style.boxShadow = '0 0 10px #ef4444';
-            }
-        }
-
-        function getCardinal(angle) {
-            const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-            return dirs[Math.round(angle / 45) % 8];
-        }
-
-        // --- 2. GPS & WAYPOINTS ---
-        let currentLat = null;
-        let currentLon = null;
-        let campLat = null;
-        let campLon = null;
-        let campBearing = null;
-        let gpsWatchId = null;
-
-        function startGPS() {
+            // 2. GPS Fix: Persistent Watch
             if ("geolocation" in navigator) {
-                const options = { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 };
-                
-                // Force an initial fetch
-                navigator.geolocation.getCurrentPosition(updatePositionUI, handleGPSError, options);
-                
-                // Then watch
-                if(gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
-                gpsWatchId = navigator.geolocation.watchPosition(updatePositionUI, handleGPSError, options);
+                navigator.geolocation.watchPosition(updateGPS, handleGPSError, {
+                    enableHighAccuracy: true,
+                    maximumAge: 1000,
+                    timeout: 10000
+                });
             }
         }
 
-        document.getElementById('btn-refresh-gps').addEventListener('click', () => {
-            vibrate(10);
-            document.getElementById('gps-status').innerText = "GPS: FETCH";
-            document.getElementById('gps-status').className = "text-orange-400 animate-pulse";
-            startGPS();
-        });
+        function handleOrientation(e) {
+            let heading = 0;
+            // iOS Hardware Compass
+            if (e.webkitCompassHeading) {
+                heading = e.webkitCompassHeading;
+            } else if (e.absolute) {
+                // Android Hardware Compass
+                heading = 360 - e.alpha;
+            }
 
-        function updatePositionUI(pos) {
-            currentLat = pos.coords.latitude;
-            currentLon = pos.coords.longitude;
-            
-            document.getElementById('gps-status').innerText = "GPS: LOCK";
-            document.getElementById('gps-status').className = "text-green-400";
-            document.getElementById('gps-lat').innerText = currentLat.toFixed(5);
-            document.getElementById('gps-lon').innerText = currentLon.toFixed(5);
-            document.getElementById('gps-acc').innerText = Math.round(pos.coords.accuracy);
-            
-            if (pos.coords.altitude !== null) document.getElementById('gps-alt').innerText = Math.round(pos.coords.altitude);
-            if (pos.coords.speed !== null) document.getElementById('gps-speed').innerText = `${(pos.coords.speed * 3.6).toFixed(1)} km/h`;
+            state.heading = heading;
+            state.pitch = e.beta; // Used for rangefinder
 
-            updateCampDistance();
+            // Update UI
+            const ring = document.getElementById('compass-ring');
+            ring.style.transform = `rotate(${-heading}deg)`;
+            
+            document.getElementById('heading-display').innerText = `${Math.round(heading).toString().padStart(3, '0')}°`;
+            document.getElementById('cardinal-display').innerText = getCardinal(heading);
+
+            updateWaypointUI();
+        }
+
+        function updateGPS(pos) {
+            state.lat = pos.coords.latitude;
+            state.lon = pos.coords.longitude;
+            
+            const acc = pos.coords.accuracy;
+            const indicator = document.getElementById('gps-indicator');
+            const statusText = document.getElementById('gps-status-text');
+
+            if (acc < 20) {
+                indicator.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#4ade80]";
+                statusText.innerText = `GPS: LOCK (${Math.round(acc)}m)`;
+            } else {
+                indicator.className = "w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_5px_orange]";
+                statusText.innerText = "GPS: WEAK LOCK";
+            }
+
+            document.getElementById('lat-val').innerText = state.lat.toFixed(5);
+            document.getElementById('lon-val').innerText = state.lon.toFixed(5);
+            document.getElementById('acc-val').innerText = `±${Math.round(acc)}m`;
+            document.getElementById('acc-val').className = acc < 20 ? "text-green-400 text-sm font-bold" : "text-orange-400 text-sm font-bold";
+            document.getElementById('alt-val').innerText = pos.coords.altitude ? `${Math.round(pos.coords.altitude)} m` : '-- m';
+
+            if (state.waypoint) updateWaypointData();
         }
 
         function handleGPSError(err) {
-            document.getElementById('gps-status').innerText = "GPS: ERR " + err.code;
-            document.getElementById('gps-status').className = "text-red-500";
+            document.getElementById('gps-status-text').innerText = "GPS: PERMISSION DENIED";
         }
 
-        document.getElementById('btn-set-camp').addEventListener('click', () => {
-            if (currentLat && currentLon) {
-                vibrate(50);
-                campLat = currentLat;
-                campLon = currentLon;
-                updateCampDistance();
-                
-                const btn = document.getElementById('btn-set-camp');
-                btn.innerText = "Coordinates Locked";
-                btn.classList.add("bg-blue-500", "text-black");
-                setTimeout(() => {
-                    btn.innerText = "Lock Current Coordinates";
-                    btn.classList.remove("bg-blue-500", "text-black");
-                }, 2000);
-            } else {
-                alert("No GPS lock yet. Please wait.");
-            }
-        });
-
-        function updateCampDistance() {
-            if (campLat && campLon && currentLat && currentLon) {
-                // Calculate Distance
-                const dist = calcDistance(currentLat, currentLon, campLat, campLon);
-                const elDist = document.getElementById('camp-dist');
-                if (dist > 1000) elDist.innerText = `${(dist/1000).toFixed(2)} km`;
-                else elDist.innerText = `${Math.round(dist)} m`;
-
-                // Calculate Bearing
-                campBearing = calcBearing(currentLat, currentLon, campLat, campLon);
-                document.getElementById('camp-bearing').innerText = `${Math.round(campBearing)}° ${getCardinal(campBearing)}`;
-
-                // Update Visual Waypoint on Compass
-                const waypointContainer = document.getElementById('waypoint-container');
-                waypointContainer.style.display = 'block';
-                // Rotate the container relative to the dial so it physically points at the target
-                waypointContainer.style.transform = `rotate(${campBearing}deg)`;
-            }
-        }
-
-        function calcDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const p1 = lat1 * Math.PI/180, p2 = lat2 * Math.PI/180;
-            const dp = (lat2-lat1) * Math.PI/180, dl = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        function calcBearing(lat1, lon1, lat2, lon2) {
-            const toRad = Math.PI / 180;
-            const toDeg = 180 / Math.PI;
-            const l1 = lat1 * toRad, l2 = lat2 * toRad;
-            const dl = (lon2 - lon1) * toRad;
-            const y = Math.sin(dl) * Math.cos(l2);
-            const x = Math.cos(l1) * Math.sin(l2) - Math.sin(l1) * Math.cos(l2) * Math.cos(dl);
-            let brng = Math.atan2(y, x) * toDeg;
-            return (brng + 360) % 360;
-        }
-
-        // --- 3. TIME & PACING ---
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('local-time').innerText = now.toTimeString().split(' ')[0];
-            document.getElementById('utc-time').innerText = now.toISOString().split('T')[1].split('.')[0] + ' Z';
-        }
-
-        // Ranger Beads setup
-        const container100m = document.getElementById('beads-100m');
-        const container1km = document.getElementById('beads-1km');
-        let count100m = 0;
-        let count1km = 0;
-
-        for(let i=0; i<9; i++) container100m.innerHTML += `<div class="bead"></div>`;
-        for(let i=0; i<4; i++) container1km.innerHTML += `<div class="bead"></div>`;
-
-        function updateBeads() {
-            Array.from(container100m.children).forEach((b, i) => {
-                if(i < count100m) b.classList.add('active'); else b.classList.remove('active');
-            });
-            Array.from(container1km.children).forEach((b, i) => {
-                if(i < count1km) b.classList.add('active'); else b.classList.remove('active');
-            });
-            document.getElementById('meters-count').innerText = count100m;
-            document.getElementById('km-count').innerText = count1km;
-        }
-
-        document.getElementById('btn-add-100m').addEventListener('click', () => {
-            vibrate(10);
-            count100m++;
-            if(count100m > 9) { count100m = 0; document.getElementById('btn-add-1km').click(); }
-            updateBeads();
-        });
-
-        document.getElementById('btn-add-1km').addEventListener('click', () => {
-            vibrate(20);
-            count1km++;
-            if(count1km > 4) count1km = 0; // Standard limits 5km before mental reset
-            updateBeads();
-        });
-
-        document.getElementById('btn-reset-pace').addEventListener('click', () => {
-            vibrate([10, 50, 10]);
-            count100m = 0; count1km = 0;
-            updateBeads();
-        });
-
-
-        // --- 4. SIGNALING (Audio, Torch, Morse) ---
-        let audioCtx;
-        function initAudio() {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-        }
-
-        // Whistle
-        let oscillator = null, isWhistling = false;
-        const btnWhistle = document.getElementById('btn-whistle');
-        btnWhistle.addEventListener('click', () => {
-            vibrate(20);
-            if (!audioCtx) return;
-            if (isWhistling) {
-                oscillator.stop(); oscillator.disconnect(); isWhistling = false;
-                btnWhistle.classList.remove('bg-red-500', 'text-black', 'border-red-500');
-                btnWhistle.classList.add('text-red-500', 'border-red-500/50', 'bg-red-500/10');
-            } else {
-                oscillator = audioCtx.createOscillator();
-                oscillator.type = 'square';
-                oscillator.frequency.setValueAtTime(3200, audioCtx.currentTime); // Piercing tone
-                const gain = audioCtx.createGain();
-                gain.gain.value = 1;
-                oscillator.connect(gain); gain.connect(audioCtx.destination);
-                oscillator.start();
-                isWhistling = true;
-                btnWhistle.classList.add('bg-red-500', 'text-black', 'border-red-500');
-                btnWhistle.classList.remove('text-red-500', 'border-red-500/50', 'bg-red-500/10');
-            }
-        });
-
-        // Torch
-        const flashOverlay = document.getElementById('flash-overlay');
-        const btnTorch = document.getElementById('btn-torch');
-        let isTorchActive = false;
-        btnTorch.addEventListener('click', () => {
-            vibrate(20);
-            if(isTxActive) stopTx();
-            isTorchActive = !isTorchActive;
-            flashOverlay.style.display = isTorchActive ? 'block' : 'none';
-            if(isTorchActive) {
-                btnTorch.classList.add('bg-green-400', 'text-black');
-                btnTorch.classList.remove('text-green-400', 'bg-green-400/10');
-            } else {
-                btnTorch.classList.remove('bg-green-400', 'text-black');
-                btnTorch.classList.add('text-green-400', 'bg-green-400/10');
-            }
-        });
-
-        // Morse Engine
-        let txTimeout, isTxActive = false;
-        const u = 150; // Morse base unit ms
-        
-        // Dictionary
-        const morseDict = {
-            'A':'.-', 'B':'-...', 'C':'-.-.', 'D':'-..', 'E':'.', 'F':'..-.', 'G':'--.', 'H':'....',
-            'I':'..', 'J':'.---', 'K':'-.-', 'L':'.-..', 'M':'--', 'N':'-.', 'O':'---', 'P':'.--.',
-            'Q':'--.-', 'R':'.-.', 'S':'...', 'T':'-', 'U':'..-', 'V':'...-', 'W':'.--', 'X':'-..-',
-            'Y':'-.--', 'Z':'--..', '1':'.----', '2':'..---', '3':'...--', '4':'....-', '5':'.....',
-            '6':'-....', '7':'--...', '8':'---..', '9':'----.', '0':'-----', ' ':' '
-        };
-
-        // Live Translator
-        const morseInput = document.getElementById('morse-input');
-        const morsePreview = document.getElementById('morse-preview');
-        
-        morseInput.addEventListener('input', (e) => {
-            const text = e.target.value.toUpperCase();
-            let preview = [];
-            for (let char of text) {
-                if (char === ' ') preview.push(' / ');
-                else if (morseDict[char]) preview.push(morseDict[char]);
-            }
-            morsePreview.innerText = preview.join(' ') || '...';
-        });
-
-        function textToTiming(text) {
-            let seq = [];
-            for (let char of text.toUpperCase()) {
-                if (char === ' ') { seq.push({v:0, t:u*7}); continue; }
-                const code = morseDict[char];
-                if (!code) continue;
-                for (let i = 0; i < code.length; i++) {
-                    const symbol = code[i];
-                    seq.push({v:1, t: symbol === '.' ? u : u*3}); // beep/flash
-                    seq.push({v:0, t: i === code.length-1 ? u*3 : u}); // gap
-                }
-            }
-            return seq;
-        }
-
-        async function playSequence(seq, btn) {
-            isTxActive = true;
-            for (let step of seq) {
-                if (!isTxActive) break;
-                
-                if (step.v === 1) {
-                    flashOverlay.style.display = 'block';
-                    // Optional audio beep
-                    if(audioCtx) {
-                        let osc = audioCtx.createOscillator();
-                        let g = audioCtx.createGain();
-                        osc.frequency.value = 600;
-                        osc.connect(g); g.connect(audioCtx.destination);
-                        osc.start();
-                        setTimeout(() => { osc.stop(); }, step.t);
-                    }
-                } else {
-                    flashOverlay.style.display = 'none';
-                }
-                
-                await new Promise(r => txTimeout = setTimeout(r, step.t));
-            }
-            stopTx(btn);
-        }
-
-        function stopTx(btnElem) {
-            isTxActive = false;
-            clearTimeout(txTimeout);
-            flashOverlay.style.display = 'none';
-            if(btnElem) {
-                btnElem.classList.remove('bg-orange-500', 'text-black', 'bg-green-500');
-            }
-            document.getElementById('btn-sos').classList.remove('bg-orange-500', 'text-black');
-            document.getElementById('btn-morse-tx').classList.remove('bg-green-500', 'text-black');
-            document.getElementById('btn-morse-tx').innerText = "TRANSMIT SIGNAL";
-        }
-
-        // Standard SOS Button
-        document.getElementById('btn-sos').addEventListener('click', function() {
-            vibrate(20);
-            if (isTorchActive) btnTorch.click();
-            if (isTxActive) { stopTx(this); return; }
+        // --- WAYPOINT LOGIC ---
+        document.getElementById('btn-lock-gps').addEventListener('click', () => {
+            if (!state.lat) return;
+            state.waypoint = { lat: state.lat, lon: state.lon };
+            document.getElementById('target-pointer').style.display = 'block';
+            updateWaypointData();
             
-            this.classList.add('bg-orange-500', 'text-black');
-            const loopSequence = async () => {
-                while(isTxActive) await playSequence(textToTiming('SOS '), this);
-            };
-            isTxActive = true;
-            loopSequence();
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(50);
         });
 
-        // Custom Tx Button
-        document.getElementById('btn-morse-tx').addEventListener('click', function() {
-            vibrate(20);
-            if (isTorchActive) btnTorch.click();
-            if (isTxActive) { stopTx(this); return; }
-
-            const text = morseInput.value.trim();
-            if(!text) return;
-
-            this.classList.add('bg-green-500', 'text-black');
-            this.innerText = "STOP TRANSMISSION";
-            playSequence(textToTiming(text), this);
-        });
-
-        flashOverlay.addEventListener('click', () => {
-            if(isTorchActive) btnTorch.click();
-            if(isTxActive) stopTx();
-        });
-
-        // --- 5. BATTERY ---
-        async function checkBattery() {
-            if ('getBattery' in navigator) {
-                try {
-                    const battery = await navigator.getBattery();
-                    const updateBatteryUI = () => {
-                        const level = Math.round(battery.level * 100);
-                        const icon = battery.charging ? '⚡' : '';
-                        const el = document.getElementById('batt-status');
-                        el.innerText = `BATT: ${level}%${icon}`;
-                        if (level <= 20 && !battery.charging) el.className = "text-red-500 animate-pulse";
-                        else if (level <= 50) el.className = "text-orange-400";
-                        else el.className = "text-green-400";
-                    };
-                    updateBatteryUI();
-                    battery.addEventListener('levelchange', updateBatteryUI);
-                    battery.addEventListener('chargingchange', updateBatteryUI);
-                } catch (e) {}
-            }
+        function updateWaypointData() {
+            if (!state.waypoint) return;
+            const dist = haversine(state.lat, state.lon, state.waypoint.lat, state.waypoint.lon);
+            const bearing = calculateBearing(state.lat, state.lon, state.waypoint.lat, state.waypoint.lon);
+            
+            state.targetBearing = bearing;
+            document.getElementById('waypoint-dist').innerText = dist > 1000 ? `${(dist/1000).toFixed(2)}km` : `${Math.round(dist)}m`;
+            document.getElementById('waypoint-bearing').innerText = `${Math.round(bearing)}°`;
         }
+
+        function updateWaypointUI() {
+            if (!state.waypoint) return;
+            const pointer = document.getElementById('target-pointer');
+            // We rotate the pointer to the absolute bearing of the target
+            pointer.style.transform = `translateX(-50%) rotate(${state.targetBearing}deg)`;
+        }
+
+        // --- RANGEFINDER LOGIC ---
+        const heightInput = document.getElementById('target-height');
+        heightInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('height-label').innerText = `${val}m`;
+            updateRange();
+        });
+
+        function updateRange() {
+            // Very rough estimation based on pitch angle relative to horizontal
+            // d = h / tan(theta)
+            const angle = Math.abs(state.pitch);
+            if (angle < 1 || angle > 89) {
+                document.getElementById('range-val').innerText = "-- m";
+                return;
+            }
+            const dist = heightInput.value / Math.tan(angle * Math.PI / 180);
+            document.getElementById('range-val').innerText = `${dist.toFixed(1)} m`;
+        }
+
+        // --- WEATHER ENGINE ---
+        function updateWeather() {
+            // Simulated if no hardware pressure sensor
+            const basePressure = 1013.25;
+            document.getElementById('baro-val').innerText = basePressure.toFixed(1);
+            
+            const now = new Date();
+            const sunset = new Date();
+            sunset.setHours(18, 45, 0);
+            
+            document.getElementById('sunset-time').innerText = "18:45";
+            const diff = (sunset - now) / (1000 * 60 * 60);
+            document.getElementById('sun-hours').innerText = diff > 0 ? diff.toFixed(1) : "0.0";
+        }
+
+        // --- SIGNALING ENGINE ---
+        const btnSos = document.getElementById('btn-sos');
+        const flash = document.getElementById('flash-overlay');
+        let sosInterval;
+
+        btnSos.addEventListener('click', () => {
+            if (sosInterval) {
+                clearInterval(sosInterval);
+                sosInterval = null;
+                flash.style.display = 'none';
+                btnSos.classList.remove('bg-red-500', 'text-black');
+            } else {
+                btnSos.classList.add('bg-red-500', 'text-black');
+                let step = 0;
+                const pattern = [200, 200, 200, 200, 200, 600, 600, 200, 600, 200, 600, 600, 200, 200, 200, 200, 200, 2000]; 
+                sosInterval = setInterval(() => {
+                    flash.style.display = flash.style.display === 'none' ? 'block' : 'none';
+                }, 300);
+            }
+        });
+
+        // --- UTILS ---
+        function getCardinal(deg) {
+            const dirs = ['NORTH', 'NORTH-EAST', 'EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST'];
+            return dirs[Math.round(deg / 45) % 8];
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function calculateBearing(lat1, lon1, lat2, lon2) {
+            const y = Math.sin((lon2-lon1) * Math.PI/180) * Math.cos(lat2 * Math.PI/180);
+            const x = Math.cos(lat1 * Math.PI/180) * Math.sin(lat2 * Math.PI/180) -
+                      Math.sin(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.cos((lon2-lon1) * Math.PI/180);
+            return (Math.atan2(y, x) * 180/Math.PI + 360) % 360;
+        }
+
+        // --- INITIALIZATION ---
+        document.getElementById('btn-init').addEventListener('click', () => {
+            document.getElementById('init-screen').style.display = 'none';
+            initSensors();
+            updateWeather();
+            setInterval(() => {
+                document.getElementById('time-text').innerText = new Date().toTimeString().split(' ')[0];
+                updateRange();
+            }, 1000);
+        });
+
+        // Battery
+        navigator.getBattery?.().then(batt => {
+            const update = () => document.getElementById('batt-text').innerText = `BATT: ${Math.round(batt.level * 100)}%`;
+            update();
+            batt.onlevelchange = update;
+        });
+
+        // Nav Logic
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'text-white/30'));
+                btn.classList.add('active');
+                document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById(btn.dataset.target).classList.add('active');
+                if (navigator.vibrate) navigator.vibrate(10);
+            });
+        });
+
     </script>
 </body>
 </html>
